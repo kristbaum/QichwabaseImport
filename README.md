@@ -1,9 +1,9 @@
 # Todos:
 
-[x] Creating items for dialect variants and sources
-[ ] Property proposal
-[x] Create query to extract dataset (different columns for each language sense)
-[ ] Update base script to match workflow
+- [x] Creating items for dialect variants and sources
+- [ ] Property proposal
+- [x] Create query to extract dataset (different columns for each language sense)
+- [ ] Update base script to match workflow
 
 ## Creating items for dialect variants and sources
 Since we are just importing the Puno Quechua variant, it is described on Wikidata as [Q7260479](https://www.wikidata.org/wiki/Q7260479).
@@ -16,6 +16,8 @@ The query has been described on [Qichwabase](https://qichwa.wikibase.cloud/), it
 For obatining the subset of quechua lexemes, the following conditions were met:
 * Verbs that are described on Puno Quechua dialect
 * Verbs that at least contain a glose
+
+The source is available on [puno_quechua_verbs_with_forms_senses](datasets/puno_quechua_verbs_with_forms_senses.csv)
 
 ```
 #Puno Quechua Lexical entries
