@@ -1,3 +1,8 @@
+# Importing Qichwabase to Wikidata
+
+A script to import Lexemes from one Wikibase to another
+
+
 # Todos:
 
 - [x] Creating items for dialect variants and sources
@@ -73,3 +78,7 @@ OPTIONAL {
 [Try it!](https://tinyurl.com/2y8d5lox)
 
 In total there should be about 1650 lexemes to be imported to Wikidata.
+
+# Setup
+
+pip
