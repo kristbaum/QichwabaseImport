@@ -81,4 +81,4 @@ In total there should be about 1650 lexemes to be imported to Wikidata.
 
 # Setup
 
-pip
+pip install -r requirements.txt

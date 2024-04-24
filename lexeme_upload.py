@@ -1,3 +1,9 @@
+import csv
+import json
+import logging
+import time
+import configparser
+from urllib.parse import unquote
 from wikibaseintegrator import WikibaseIntegrator, wbi_login
 from wikibaseintegrator.datatypes import (
     ExternalID,
@@ -9,17 +15,12 @@ from wikibaseintegrator.datatypes import (
 )
 from wikibaseintegrator.wbi_config import config as wbi_config
 from wikibaseintegrator.wbi_enums import WikibaseDatePrecision
-import csv
-import json
-import logging
-import time
-import configparser
-from urllib.parse import unquote
 
-
+# Read configuration
 config = configparser.ConfigParser()
 config.read("config.ini")
 
+# Set up logging
 logging.basicConfig(level=logging.INFO)
 wbi_config["USER_AGENT"] = (
     config["DEFAULT"]["user"]
@@ -28,40 +29,49 @@ wbi_config["USER_AGENT"] = (
     + ")"
 )
 
+# Login to Wikibase
 login_instance = wbi_login.Clientlogin(
     user=config["DEFAULT"]["user"], password=config["DEFAULT"]["password"]
 )
-
 wbi = WikibaseIntegrator(login=login_instance, is_bot=False)
 
-with open("el_kaikki/trin_matched.json", "r") as readfile:
-    file_lines = readfile.readlines()
-    for i, line in enumerate(file_lines):
-        lemma = json.loads(line)
-        if i > 100 and "tria_url" in lemma:
-            print(str(i) + lemma["word"])
-            new_lexeme = wbi.lexeme.new(lexical_category="Q24905", language="Q36510")
-            new_lexeme.lemmas.set(language="el", value=lemma["word"])
+# Open the CSV file and read data
+with open(
+    "datasets/puno_quechua_verbs_with_forms_senses.csv", mode="r", encoding="utf-8"
+) as file:
+    reader = csv.DictReader(file)
+    for row in reader:
+        # Create a new lexeme with the provided information
+        new_lexeme = wbi.lexeme.new(
+            lexical_category=row["lex_cat_wikidata"], language=row["language"]
+        )
+        new_lexeme.lemmas.set(language=row["language"], value=row["lemma"])
 
-            references = [
-                [
-                    URL(value=unquote(lemma["tria_url"]), prop_nr="P854"),
-                    Time(
-                        time="+2023-05-02T00:00:00Z",
-                        prop_nr="P813",
-                        precision=WikibaseDatePrecision.DAY,
-                    ),
-                    Item(prop_nr="P407", value="Q36510"),
-                    MonolingualText(
-                        text="Λεξικό της κοινής νεοελληνικής",
-                        language="el",
-                        prop_nr="P1476",
-                    ),
-                ]
+        # Set up references for claims
+        references = [
+            [
+                URL(value=unquote(row["entry"]), prop_nr="P854"),
+                Time(
+                    time="+2023-05-02T00:00:00Z",
+                    prop_nr="P813",
+                    precision=WikibaseDatePrecision.DAY,
+                ),
+                Item(prop_nr="P407", value=row["language"]),
+                MonolingualText(
+                    text="Lexicon reference",
+                    language=row["language"],
+                    prop_nr="P1476",
+                ),
             ]
+        ]
 
-            claim1 = Item(prop_nr="P1343", value="Q22906367", references=references)
-            new_lexeme.claims.add(claim1)
+        # Create and add claims
+        claim1 = Item(
+            prop_nr="P1343", value=row["des_by_source_P1343"], references=references
+        )
+        new_lexeme.claims.add(claim1)
 
-            new_lexeme.write()
-            time.sleep(0.7)
+        # Write the new lexeme to the Wikibase
+        new_lexeme.write()
+        time.sleep(0.7)  # Delay to avoid rate limiting
+        exit() # for testing
