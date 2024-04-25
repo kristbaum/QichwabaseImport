@@ -12,6 +12,8 @@ from wikibaseintegrator.datatypes import (
     Time,
     URL,
     MonolingualText,
+    Form,
+    Sense,
 )
 from wikibaseintegrator.wbi_config import config as wbi_config
 from wikibaseintegrator.wbi_enums import WikibaseDatePrecision
@@ -60,7 +62,7 @@ with open(
                 Item(prop_nr="P407", value=row["language"]),
                 MonolingualText(
                     text="Lexicon reference",
-                    language="qu",
+                    language=row["language"],
                     prop_nr="P1476",
                 ),
             ]
@@ -72,9 +74,26 @@ with open(
         )
         new_lexeme.claims.add(claim1)
 
+        # Add senses in four languages
+        for lang in ["de", "en", "es", "it"]:
+            sense = Sense()
+            sense.glosses.set(language=lang, value=row[f"sense1_gloss_{lang}"])
+            new_lexeme.senses.add(sense)
+
+        # Add a form
+        form = Form()
+        form.representations.set(
+            language=row["language"], value=row["form1_representation"]
+        )
+        if "form1_spelling_variant" in row:
+            form.grammatical_features.append(row["form1_spelling_variant"])
+        new_lexeme.forms.add(form)
+
         # Write the new lexeme to the Wikibase
         created_lexeme = new_lexeme.write()
         created_lexemes.append(created_lexeme)
         time.sleep(0.7)  # Delay to avoid rate limiting
         exit()  # for testing
-    # Somehow write the created lexemes to a file
+
+
+# lemma 2 = form with x code
