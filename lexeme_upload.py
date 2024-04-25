@@ -42,10 +42,8 @@ with open(
     reader = csv.DictReader(file)
     for row in reader:
         # Create a new lexeme with the provided information
-        new_lexeme = wbi.lexeme.new(
-            lexical_category=row["lex_cat_wikidata"], language=row["language"]
-        )
-        new_lexeme.lemmas.set(language=row["language"], value=row["lemma"])
+        new_lexeme = wbi.lexeme.new(lexical_category=row["lex_cat_wikidata"], language="qu")
+        new_lexeme.lemmas.set(language="qu", value=row["lemma"])
 
         # Set up references for claims
         references = [
@@ -59,7 +57,7 @@ with open(
                 Item(prop_nr="P407", value=row["language"]),
                 MonolingualText(
                     text="Lexicon reference",
-                    language=row["language"],
+                    language="qu",
                     prop_nr="P1476",
                 ),
             ]
@@ -74,4 +72,4 @@ with open(
         # Write the new lexeme to the Wikibase
         new_lexeme.write()
         time.sleep(0.7)  # Delay to avoid rate limiting
-        exit() # for testing
+        exit()  # for testing
