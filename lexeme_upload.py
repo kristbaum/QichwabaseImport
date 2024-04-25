@@ -40,9 +40,12 @@ with open(
     "datasets/puno_quechua_verbs_with_forms_senses.csv", mode="r", encoding="utf-8"
 ) as file:
     reader = csv.DictReader(file)
+    created_lexemes = []
     for row in reader:
         # Create a new lexeme with the provided information
-        new_lexeme = wbi.lexeme.new(lexical_category=row["lex_cat_wikidata"], language="qu")
+        new_lexeme = wbi.lexeme.new(
+            lexical_category=row["lex_cat_wikidata"], language="qu"
+        )
         new_lexeme.lemmas.set(language="qu", value=row["lemma"])
 
         # Set up references for claims
@@ -70,6 +73,8 @@ with open(
         new_lexeme.claims.add(claim1)
 
         # Write the new lexeme to the Wikibase
-        new_lexeme.write()
+        created_lexeme = new_lexeme.write()
+        created_lexemes.append(created_lexeme)
         time.sleep(0.7)  # Delay to avoid rate limiting
         exit()  # for testing
+    # Somehow write the created lexemes to a file
