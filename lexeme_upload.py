@@ -37,8 +37,8 @@ login_instance = wbi_login.Clientlogin(
 wbi = WikibaseIntegrator(login=login_instance, is_bot=False)
 
 # Set up the range of rows to process
-start_row = 136
-end_row = 137
+start_row = 1
+end_row = 50
 
 last_entry = None
 last_lexeme = None
@@ -58,6 +58,7 @@ with open(
         elif row_number > end_row:
             break
         elif row_number in [1, 2, 3, 8, 9]:
+            print("Skipping row", row_number)
             continue
 
         # Create a new lexeme with the provided information
@@ -123,11 +124,11 @@ with open(
             last_form = form
 
         # Write the new lexeme to the Wikibase
-        # created_lexeme = new_lexeme.write()
-        created_lexeme = new_lexeme
+        created_lexeme = new_lexeme.write()
+        #created_lexeme = new_lexeme
         print(created_lexeme.id)
-        print(created_lexeme.forms)
-        print(created_lexeme.lemmas)
+        #print(created_lexeme.forms)
+        #print(created_lexeme.lemmas)
         created_lexemes.append((created_lexeme.id, row))
 
         # To catch multiple entries with the same lexeme
