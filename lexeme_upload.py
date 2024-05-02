@@ -37,8 +37,8 @@ login_instance = wbi_login.Clientlogin(
 wbi = WikibaseIntegrator(login=login_instance, is_bot=False)
 
 # Set up the range of rows to process
-start_row = 1
-end_row = 50
+start_row = 1651
+end_row = 1651
 
 last_entry = None
 last_lexeme = None
@@ -74,14 +74,17 @@ with open(
                 language=row["form1_spelling_variant"],
                 value=row["form1_representation"],
             )
-            
 
         else:
             new_lexeme = wbi.lexeme.new(
                 lexical_category=row["lex_cat_wikidata"], language="Q5218"
             )
             # First lemma should always be qu
-            new_lexeme.lemmas.set(language="qu", value=row["form1_representation"])
+            new_lexeme.lemmas.set(language="qu", value=row["lemma"])
+            new_lexeme.lemmas.set(
+                language=row["form1_spelling_variant"],
+                value=row["form1_representation"],
+            )
 
             # Senses are only added once!
             sense = Sense()
@@ -118,17 +121,21 @@ with open(
 
             # Use qu in the first Form
             form = Form()
-            form.representations.set(language="qu", value=row["form1_representation"])
+            form.representations.set(language="qu", value=row["lemma"])
+            form.representations.set(
+                language=row["form1_spelling_variant"],
+                value=row["form1_representation"],
+            )
             form.grammatical_features = ["Q179230"]  # Q179230 is infinitive
             new_lexeme.forms.add(form)
             last_form = form
 
         # Write the new lexeme to the Wikibase
         created_lexeme = new_lexeme.write()
-        #created_lexeme = new_lexeme
+        # created_lexeme = new_lexeme
         print(created_lexeme.id)
-        #print(created_lexeme.forms)
-        #print(created_lexeme.lemmas)
+        # print(created_lexeme.forms)
+        # print(created_lexeme.lemmas)
         created_lexemes.append((created_lexeme.id, row))
 
         # To catch multiple entries with the same lexeme
