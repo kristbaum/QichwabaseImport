@@ -11,9 +11,8 @@ from wikibaseintegrator.datatypes import (
     Time,
     URL,
     MonolingualText,
-    Form,
-    Sense,
 )
+from wikibaseintegrator.models import Reference, References, Form, Sense
 
 from wikibaseintegrator.wbi_config import config as wbi_config
 from wikibaseintegrator.wbi_enums import WikibaseDatePrecision
@@ -57,15 +56,15 @@ with open(
 
         # Create a new lexeme with the provided information
         new_lexeme = wbi.lexeme.new(
-            lexical_category=row["lex_cat_wikidata"], language="qu"
+            lexical_category=row["lex_cat_wikidata"], language="Q5218"
         )
         new_lexeme.lemmas.set(language="qu", value=row["lemma"])
 
         sense = Sense()
-        sense.glosses.set(language="en", value="English gloss")
-        sense.glosses.set(language="fr", value="French gloss")
-        claim = String(prop_nr="P828", value="Create a string claim for sense")
-        sense.claims.add(claim)
+        sense.glosses.set(language="en", value=row["sense1_gloss_en"])
+        sense.glosses.set(language="de", value=row["sense1_gloss_de"])
+        sense.glosses.set(language="es", value=row["sense1_gloss_es"])
+        sense.glosses.set(language="it", value=row["sense1_gloss_it"])
         new_lexeme.senses.add(sense)
 
         form = Form()
@@ -97,9 +96,11 @@ with open(
         )
         new_lexeme.claims.add(claim1)
 
+        print(new_lexeme)
+
         # Write the new lexeme to the Wikibase
-        created_lexeme = new_lexeme.write()
-        created_lexemes.append((created_lexeme.id, row))
+        # created_lexeme = new_lexeme.write()
+        # created_lexemes.append((created_lexeme.id, row))
 
         time.sleep(0.7)  # Delay to avoid rate limiting
 
