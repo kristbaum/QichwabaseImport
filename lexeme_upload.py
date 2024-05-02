@@ -37,8 +37,11 @@ login_instance = wbi_login.Clientlogin(
 wbi = WikibaseIntegrator(login=login_instance, is_bot=False)
 
 # Set up the range of rows to process
-start_row = 2
-end_row = 2
+start_row = 136
+end_row = 137
+
+last_entry = None
+last_lexeme = None
 
 # Open the CSV file and read data
 created_lexemes = []
@@ -53,55 +56,78 @@ with open(
             continue
         elif row_number > end_row:
             break
+        elif row_number in [1, 2, 3, 8, 9]:
+            continue
 
         # Create a new lexeme with the provided information
-        new_lexeme = wbi.lexeme.new(
-            lexical_category=row["lex_cat_wikidata"], language="Q5218"
-        )
-        new_lexeme.lemmas.set(language="qu", value=row["lemma"])
+        if row["entry"] == last_entry:
+            print("Same Lexeme detected, adding new form to existing lexeme.")
+            new_lexeme = last_lexeme
+            new_lexeme.lemmas.set(
+                language=row["form1_spelling_variant"],
+                value=row["form1_representation"],
+            )
+            # Use spelling variant in the next Forms
+            new_lexeme.forms[0].representations.set(
+                language=row["form1_spelling_variant"],
+                value=row["form1_representation"],
+            )
 
-        sense = Sense()
-        sense.glosses.set(language="en", value=row["sense1_gloss_en"])
-        sense.glosses.set(language="de", value=row["sense1_gloss_de"])
-        sense.glosses.set(language="es", value=row["sense1_gloss_es"])
-        sense.glosses.set(language="it", value=row["sense1_gloss_it"])
-        new_lexeme.senses.add(sense)
+        else:
+            new_lexeme = wbi.lexeme.new(
+                lexical_category=row["lex_cat_wikidata"], language="Q5218"
+            )
+            # First lemma should always be qu
+            new_lexeme.lemmas.set(language="qu", value=row["form1_representation"])
 
-        form = Form()
-        form.representations.set(language="qu", value=row["form1_representation"])
-        form.grammatical_features = ["Q179230"]  # Q179230 is infinitive
-        new_lexeme.forms.add(form)
+            # Senses are only added once!
+            sense = Sense()
+            sense.glosses.set(language="en", value=row["sense1_gloss_en"])
+            sense.glosses.set(language="de", value=row["sense1_gloss_de"])
+            sense.glosses.set(language="es", value=row["sense1_gloss_es"])
+            sense.glosses.set(language="it", value=row["sense1_gloss_it"])
+            new_lexeme.senses.add(sense)
 
-        # Set up references for claims
-        references = [
-            [
-                URL(value=unquote(row["entry"]), prop_nr="P854"),
-                Time(
-                    time="+2024-05-02T00:00:00Z",
-                    prop_nr="P813",
-                    precision=WikibaseDatePrecision.DAY,
-                ),
-                Item(prop_nr="P407", value="Q1860"),
-                MonolingualText(
-                    text="Qichwabase Reference",
-                    language="en",
-                    prop_nr="P1476",
-                ),
-                Item(prop_nr="248", value="Q115660438"),
+            # Set up references for claims (only once per lexeme!)
+            references = [
+                [
+                    URL(value=unquote(row["entry"]), prop_nr="P854"),
+                    Time(
+                        time="+2024-05-02T00:00:00Z",
+                        prop_nr="P813",
+                        precision=WikibaseDatePrecision.DAY,
+                    ),
+                    Item(prop_nr="P407", value="Q5218"),
+                    MonolingualText(
+                        text="Qichwabase Reference",
+                        language="en",
+                        prop_nr="P1476",
+                    ),
+                    Item(prop_nr="P248", value="Q115660438"),
+                ]
             ]
-        ]
 
-        # Create and add claims
-        claim1 = Item(
-            prop_nr="P1343", value=row["des_by_source_P1343"], references=references
-        )
-        new_lexeme.claims.add(claim1)
+            # Create and add claims
+            claim1 = Item(
+                prop_nr="P1343", value=row["des_by_source_P1343"], references=references
+            )
+            new_lexeme.claims.add(claim1)
 
-        print(new_lexeme)
+            # Use qu in the first Form
+            form = Form()
+            form.representations.set(language="qu", value=row["form1_representation"])
+            form.grammatical_features = ["Q179230"]  # Q179230 is infinitive
+            new_lexeme.forms.add(form)
+
 
         # Write the new lexeme to the Wikibase
         created_lexeme = new_lexeme.write()
+        print(created_lexeme.id)
         created_lexemes.append((created_lexeme.id, row))
+
+        # To catch multiple entries with the same lexeme
+        last_entry = row["entry"]
+        last_lexeme = created_lexeme
 
         time.sleep(0.7)  # Delay to avoid rate limiting
 
