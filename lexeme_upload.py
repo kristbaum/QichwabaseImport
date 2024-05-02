@@ -14,6 +14,7 @@ from wikibaseintegrator.datatypes import (
     Form,
     Sense,
 )
+
 from wikibaseintegrator.wbi_config import config as wbi_config
 from wikibaseintegrator.wbi_enums import WikibaseDatePrecision
 
@@ -50,9 +51,9 @@ with open(
     for row in reader:
         row_number += 1
         if row_number < start_row:
-            continue  
+            continue
         elif row_number > end_row:
-            break 
+            break
 
         # Create a new lexeme with the provided information
         new_lexeme = wbi.lexeme.new(
@@ -60,12 +61,24 @@ with open(
         )
         new_lexeme.lemmas.set(language="qu", value=row["lemma"])
 
+        sense = Sense()
+        sense.glosses.set(language="en", value="English gloss")
+        sense.glosses.set(language="fr", value="French gloss")
+        claim = String(prop_nr="P828", value="Create a string claim for sense")
+        sense.claims.add(claim)
+        new_lexeme.senses.add(sense)
+
+        form = Form()
+        form.representations.set(language="qu", value=row["form1_representation"])
+        form.grammatical_features = ["Q179230"]  # Q179230 is infinitive
+        new_lexeme.forms.add(form)
+
         # Set up references for claims
         references = [
             [
                 URL(value=unquote(row["entry"]), prop_nr="P854"),
                 Time(
-                    time="+2023-05-02T00:00:00Z",
+                    time="+2024-05-02T00:00:00Z",
                     prop_nr="P813",
                     precision=WikibaseDatePrecision.DAY,
                 ),
