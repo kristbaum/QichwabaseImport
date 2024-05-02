@@ -42,6 +42,7 @@ end_row = 137
 
 last_entry = None
 last_lexeme = None
+last_form = None
 
 # Open the CSV file and read data
 created_lexemes = []
@@ -68,10 +69,11 @@ with open(
                 value=row["form1_representation"],
             )
             # Use spelling variant in the next Forms
-            new_lexeme.forms[0].representations.set(
+            last_form.representations.set(
                 language=row["form1_spelling_variant"],
                 value=row["form1_representation"],
             )
+            
 
         else:
             new_lexeme = wbi.lexeme.new(
@@ -118,11 +120,14 @@ with open(
             form.representations.set(language="qu", value=row["form1_representation"])
             form.grammatical_features = ["Q179230"]  # Q179230 is infinitive
             new_lexeme.forms.add(form)
-
+            last_form = form
 
         # Write the new lexeme to the Wikibase
-        created_lexeme = new_lexeme.write()
+        # created_lexeme = new_lexeme.write()
+        created_lexeme = new_lexeme
         print(created_lexeme.id)
+        print(created_lexeme.forms)
+        print(created_lexeme.lemmas)
         created_lexemes.append((created_lexeme.id, row))
 
         # To catch multiple entries with the same lexeme
