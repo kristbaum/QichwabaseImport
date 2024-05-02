@@ -1,8 +1,7 @@
 import csv
-import json
+import configparser
 import logging
 import time
-import configparser
 from urllib.parse import unquote
 from wikibaseintegrator import WikibaseIntegrator, wbi_login
 from wikibaseintegrator.datatypes import (
@@ -37,13 +36,24 @@ login_instance = wbi_login.Clientlogin(
 )
 wbi = WikibaseIntegrator(login=login_instance, is_bot=False)
 
+# Set up the range of rows to process
+start_row = 1
+end_row = 2
+
 # Open the CSV file and read data
+created_lexemes = []
 with open(
     "datasets/puno_quechua_verbs_with_forms_senses.csv", mode="r", encoding="utf-8"
 ) as file:
     reader = csv.DictReader(file)
-    created_lexemes = []
+    row_number = 0
     for row in reader:
+        row_number += 1
+        if row_number < start_row:
+            continue  
+        elif row_number > end_row:
+            break 
+
         # Create a new lexeme with the provided information
         new_lexeme = wbi.lexeme.new(
             lexical_category=row["lex_cat_wikidata"], language="qu"
@@ -74,26 +84,18 @@ with open(
         )
         new_lexeme.claims.add(claim1)
 
-        # Add senses in four languages
-        for lang in ["de", "en", "es", "it"]:
-            sense = Sense()
-            sense.glosses.set(language=lang, value=row[f"sense1_gloss_{lang}"])
-            new_lexeme.senses.add(sense)
-
-        # Add a form
-        form = Form()
-        form.representations.set(
-            language=row["language"], value=row["form1_representation"]
-        )
-        if "form1_spelling_variant" in row:
-            form.grammatical_features.append(row["form1_spelling_variant"])
-        new_lexeme.forms.add(form)
-
         # Write the new lexeme to the Wikibase
         created_lexeme = new_lexeme.write()
-        created_lexemes.append(created_lexeme)
+        created_lexemes.append((created_lexeme.id, row))
+
         time.sleep(0.7)  # Delay to avoid rate limiting
-        exit()  # for testing
 
-
-# lemma 2 = form with x code
+# Write the new CSV with the Lexeme IDs
+new_csv_filename = "datasets/puno_quechua_verbs_with_forms_senses_with_lexeme_ids.csv"
+with open(new_csv_filename, mode="w", encoding="utf-8", newline="") as file:
+    fieldnames = list(reader.fieldnames) + ["Lexeme_ID"]
+    writer = csv.DictWriter(file, fieldnames=fieldnames)
+    writer.writeheader()
+    for lexeme_id, row_data in created_lexemes:
+        row_data["Lexeme_ID"] = lexeme_id
+        writer.writerow(row_data)
