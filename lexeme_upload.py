@@ -37,7 +37,7 @@ login_instance = wbi_login.Clientlogin(
 wbi = WikibaseIntegrator(login=login_instance, is_bot=False)
 
 # Set up the range of rows to process
-start_row = 1
+start_row = 2
 end_row = 2
 
 # Open the CSV file and read data
@@ -81,12 +81,13 @@ with open(
                     prop_nr="P813",
                     precision=WikibaseDatePrecision.DAY,
                 ),
-                Item(prop_nr="P407", value=row["language"]),
+                Item(prop_nr="P407", value="Q1860"),
                 MonolingualText(
-                    text="Lexicon reference",
-                    language=row["language"],
+                    text="Qichwabase Reference",
+                    language="en",
                     prop_nr="P1476",
                 ),
+                Item(prop_nr="248", value="Q115660438"),
             ]
         ]
 
@@ -99,17 +100,17 @@ with open(
         print(new_lexeme)
 
         # Write the new lexeme to the Wikibase
-        # created_lexeme = new_lexeme.write()
-        # created_lexemes.append((created_lexeme.id, row))
+        created_lexeme = new_lexeme.write()
+        created_lexemes.append((created_lexeme.id, row))
 
         time.sleep(0.7)  # Delay to avoid rate limiting
 
 # Write the new CSV with the Lexeme IDs
 new_csv_filename = "datasets/puno_quechua_verbs_with_forms_senses_with_lexeme_ids.csv"
-with open(new_csv_filename, mode="w", encoding="utf-8", newline="") as file:
-    fieldnames = list(reader.fieldnames) + ["Lexeme_ID"]
+with open(new_csv_filename, mode="a", encoding="utf-8", newline="") as file:
+    fieldnames = list(reader.fieldnames) + ["WD_Lexeme_ID"]
     writer = csv.DictWriter(file, fieldnames=fieldnames)
     writer.writeheader()
     for lexeme_id, row_data in created_lexemes:
-        row_data["Lexeme_ID"] = lexeme_id
+        row_data["WD_Lexeme_ID"] = lexeme_id
         writer.writerow(row_data)
